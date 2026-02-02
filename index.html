@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>💘 Valentine Quest</title>
+  <style>
+    :root{
+      --bg1:#ffdde1;
+      --bg2:#ee9ca7;
+      --card:#ffffffcc;
+      --text:#2b2b2b;
+      --accent:#ff3b6a;
+      --shadow: 0 18px 50px rgba(0,0,0,.18);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background: radial-gradient(circle at 20% 10%, #fff 0 10%, transparent 35%),
+                  radial-gradient(circle at 80% 20%, #fff 0 8%, transparent 35%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      overflow:hidden;
+    }
+
+    /* Game container */
+    #gameWrap{
+      width:min(920px, 92vw);
+      height:min(620px, 82vh);
+      position:relative;
+      border-radius:22px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.5);
+    }
+
+    /* Top HUD */
+    #hud{
+      position:absolute;
+      inset: 14px 14px auto 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      z-index:10;
+    }
+    .pill{
+      background:#fff;
+      border:1px solid rgba(0,0,0,.06);
+      border-radius:999px;
+      padding:10px 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:650;
+    }
+    #goalText{ font-weight:700; }
+    #score{
+      color: var(--accent);
+      font-weight:900;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+
+    /* Start screen */
+    #startScreen{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      z-index:9;
+    }
+    #startCard{
+      width:min(560px, 88%);
+      padding:26px 22px 22px;
+      border-radius:20px;
+      background:#fff;
+      box-shadow: var(--shadow);
+      text-align:center;
+      border:1px solid rgba(0,0,0,.06);
+    }
+    #startCard h1{
+      margin:0 0 6px;
+      font-size: 30px;
+      letter-spacing:.2px;
+    }
+    #startCard p{
+      margin: 8px 0 16px;
+      opacity:.85;
+      line-height:1.35;
+    }
+
+    /* Big clickable heart */
+    #bigHeartBtn{
+      width:150px;
+      height:150px;
+      border-radius:28px;
+      border:none;
+      cursor:pointer;
+      background: linear-gradient(145deg, #ff5b85, #ff2c61);
+      box-shadow: 0 18px 40px rgba(255,59,106,.35);
+      display:grid;
+      place-items:center;
+      transition: transform .08s ease, filter .2s ease;
+      margin: 14px auto 12px;
+    }
+    #bigHeartBtn:hover{ filter: brightness(1.05); }
+    #bigHeartBtn:active{ transform: scale(.98); }
+    #bigHeartBtn span{
+      font-size:72px;
+      transform: translateY(-2px);
+      text-shadow: 0 10px 18px rgba(0,0,0,.15);
+    }
+
+    .hint{
+      font-size: 13px;
+      opacity:.75;
+      margin-top: 6px;
+    }
+
+    /* Playfield */
+    #playfield{
+      position:absolute;
+      inset:0;
+      z-index:1;
+    }
+
+    /* Basket */
+    #basket{
+      position:absolute;
+      bottom:18px;
+      left:50%;
+      transform: translateX(-50%);
+      width:120px;
+      height:30px;
+      border-radius: 14px;
+      background: #2b2b2b;
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+    }
+    #basket::before{
+      content:"";
+      position:absolute;
+      inset: -10px 10px auto 10px;
+      height:14px;
+      border-radius: 10px;
+      background: rgba(43,43,43,.35);
+      filter: blur(.2px);
+    }
+
+    /* Falling hearts */
+    .heart{
+      position:absolute;
+      top:-30px;
+      font-size: 24px;
+      will-change: transform;
+      user-select:none;
+      pointer-events:none;
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,.18));
+    }
+
+    /* Treasure modal */
+    #modal{
+      position:absolute;
+      inset:0;
+      display:none;
+      place-items:center;
+      z-index:20;
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(3px);
+    }
+    #modalCard{
+      width:min(640px, 90%);
+      background:#fff;
+      border-radius:22px;
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      border:1px solid rgba(0,0,0,.06);
+      text-align:center;
+    }
+    #modalCard h2{
+      margin: 6px 0 10px;
+      font-size: 26px;
+    }
+    #treasureImg{
+      width:100%;
+      max-height: 340px;
+      object-fit: cover;
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,.08);
+    }
+    #closeBtn, #restartBtn{
+      margin-top: 14px;
+      border:none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor:pointer;
+      font-weight:800;
+    }
+    #restartBtn{
+      background: linear-gradient(145deg, #ff5b85, #ff2c61);
+      color:#fff;
+      box-shadow: 0 14px 28px rgba(255,59,106,.28);
+      margin-right:10px;
+    }
+    #closeBtn{
+      background:#f2f2f2;
+    }
+
+    /* Small footer note */
+    #tinyNote{
+      position:absolute;
+      bottom:10px;
+      left:14px;
+      font-size: 12px;
+      opacity:.65;
+      z-index:10;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="gameWrap">
+    <div id="hud">
+      <div class="pill">Score: <span id="score">0</span></div>
+      <div class="pill" id="goalText">Reach <span style="color:var(--accent);font-weight:900;">100</span> points to discover a treasure ✨</div>
+    </div>
+
+    <div id="startScreen">
+      <div id="startCard">
+        <h1>Hi my Valentine 💘</h1>
+        <p>
+          Click the heart to start the game.<br/>
+          Collect the falling hearts to earn points!
+        </p>
+
+        <button id="bigHeartBtn" aria-label="Start game">
+          <span>❤️</span>
+        </button>
+        <div class="hint">Move the basket with your mouse / finger, or arrow keys.</div>
+      </div>
+    </div>
+
+    <div id="playfield">
+      <div id="basket" aria-hidden="true"></div>
+      <div id="tinyNote">Made with love 🫶</div>
+    </div>
+
+    <div id="modal">
+      <div id="modalCard">
+        <h2>Treasure unlocked 😏🍗</h2>
+        <p style="margin:0 0 12px;opacity:.8">You hit 100 points! Here’s your reward:</p>
+
+        <!-- Put your Buffalo Wild Wings image in /images/bww.jpg -->
+        <img id="treasureImg" src="images/bww.jpg" alt="Buffalo Wild Wings treasure"/>
+
+        <div>
+          <button id="restartBtn">Play again</button>
+          <button id="closeBtn">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const playfield = document.getElementById('playfield');
+  const basket = document.getElementById('basket');
+  const startScreen = document.getElementById('startScreen');
+  const bigHeartBtn = document.getElementById('bigHeartBtn');
+  const scoreEl = document.getElementById('score');
+  const modal = document.getElementById('modal');
+  const closeBtn = document.getElementById('closeBtn');
+  const restartBtn = document.getElementById('restartBtn');
+
+  let running = false;
+  let score = 0;
+
+  // Basket movement
+  let basketX = 0; // center x in px (left position)
+  const basketWidth = () => basket.getBoundingClientRect().width;
+
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+  function setBasketCenter(clientX){
+    const rect = playfield.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const half = basketWidth() / 2;
+    basketX = clamp(x - half, 0, rect.width - basketWidth());
+    basket.style.left = basketX + 'px';
+    basket.style.transform = 'translateX(0)'; // override initial centering
+  }
+
+  // Mouse / touch follow
+  playfield.addEventListener('mousemove', (e) => { if (running) setBasketCenter(e.clientX); });
+  playfield.addEventListener('touchmove', (e) => {
+    if (!running) return;
+    const t = e.touches[0];
+    if (t) setBasketCenter(t.clientX);
+  }, { passive:true });
+
+  // Arrow keys
+  window.addEventListener('keydown', (e) => {
+    if (!running) return;
+    const rect = playfield.getBoundingClientRect();
+    const step = 18;
+    if (e.key === 'ArrowLeft') basketX = clamp(basketX - step, 0, rect.width - basketWidth());
+    if (e.key === 'ArrowRight') basketX = clamp(basketX + step, 0, rect.width - basketWidth());
+    basket.style.left = basketX + 'px';
+    basket.style.transform = 'translateX(0)';
+  });
+
+  // Hearts
+  const hearts = [];
+  const HEART_EMOJIS = ['❤️','💖','💘','💗','💕'];
+  let spawnTimer = 0;
+
+  function spawnHeart(){
+    const rect = playfield.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'heart';
+    el.textContent = HEART_EMOJIS[Math.floor(Math.random() * HEART_EMOJIS.length)];
+    playfield.appendChild(el);
+
+    const size = 18 + Math.random() * 18; // font size
+    el.style.fontSize = size + 'px';
+
+    const x = Math.random() * (rect.width - 30);
+    const speed = 120 + Math.random() * 220; // px/sec
+    const drift = (Math.random() * 2 - 1) * 30; // left/right drift
+
+    hearts.push({
+      el,
+      x,
+      y: -40,
+      speed,
+      drift,
+      rot: (Math.random() * 2 - 1) * 30
+    });
+  }
+
+  function rectsOverlap(a, b){
+    return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+  }
+
+  function updateScore(next){
+    score = next;
+    scoreEl.textContent = score;
+
+    if (score >= 100){
+      running = false;
+      modal.style.display = 'grid';
+    }
+  }
+
+  function resetGame(){
+    // Remove existing hearts
+    for (const h of hearts) h.el.remove();
+    hearts.length = 0;
+
+    // Reset score
+    updateScore(0);
+
+    // Reset basket to center
+    const rect = playfield.getBoundingClientRect();
+    basketX = (rect.width - basketWidth()) / 2;
+    basket.style.left = basketX + 'px';
+    basket.style.transform = 'translateX(0)';
+  }
+
+  // Main loop
+  let last = performance.now();
+  function tick(now){
+    const dt = (now - last) / 1000; // seconds
+    last = now;
+
+    if (running){
+      spawnTimer += dt;
+      // spawn rate: ~6 per second (slightly random)
+      const targetInterval = 0.16 + Math.random() * 0.06;
+      if (spawnTimer >= targetInterval){
+        spawnTimer = 0;
+        spawnHeart();
+      }
+
+      const basketRect = basket.getBoundingClientRect();
+
+      // Update hearts
+      for (let i = hearts.length - 1; i >= 0; i--){
+        const h = hearts[i];
+        h.y += h.speed * dt;
+        h.x += (h.drift * dt);
+
+        // Keep hearts within bounds slightly
+        const fieldRect = playfield.getBoundingClientRect();
+        h.x = clamp(h.x, -10, fieldRect.width - 10);
+
+        h.el.style.transform = `translate(${h.x}px, ${h.y}px) rotate(${h.rot}deg)`;
+
+        // Collision check
+        const heartRect = h.el.getBoundingClientRect();
+        if (rectsOverlap(heartRect, basketRect)){
+          h.el.remove();
+          hearts.splice(i, 1);
+          updateScore(score + 1);
+          continue;
+        }
+
+        // Cleanup if off-screen
+        if (h.y > fieldRect.height + 60){
+          h.el.remove();
+          hearts.splice(i, 1);
+        }
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // Start button
+  bigHeartBtn.addEventListener('click', () => {
+    startScreen.style.display = 'none';
+    modal.style.display = 'none';
+    resetGame();
+    running = true;
+  });
+
+  // Modal buttons
+  closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+  restartBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+    resetGame();
+    running = true;
+  });
+
+  // Initial basket centering (after layout)
+  window.addEventListener('load', () => {
+    const rect = playfield.getBoundingClientRect();
+    basketX = (rect.width - basketWidth()) / 2;
+    basket.style.left = basketX + 'px';
+    basket.style.transform = 'translateX(0)';
+  });
+})();
+</script>
+</body>
+</html>
